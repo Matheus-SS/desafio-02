@@ -66,7 +66,7 @@ class PlanController {
     if (!plan) {
       return res.status(400).json({ error: 'Plan does not exists' });
     }
-    // aqui o plano é atualizado
+    // aqui o plano é excluido
     await plan.destroy();
 
     return res.json(plan);
