@@ -4,7 +4,8 @@ import Enrollment from '../models/Enrollment';
 import Student from '../models/Student';
 import Plan from '../models/Plan';
 
-import Mail from '../../lib/Mail';
+import WelcomeMail from '../jobs/WelcomeMail';
+import Queue from '../../lib/Queue';
 
 class EnrollmentController {
   async store(req, res) {
@@ -63,10 +64,23 @@ class EnrollmentController {
       end_date: addEndDate,
     });
 
-    await Mail.sendMail({
-      to: `${checkStudent.name} <${checkStudent.email}>`,
-      subject: 'Matrícula concluída',
-      text: 'Sua matrícula foi concluída com sucesso',
+    const FindEnrollment = await Enrollment.findByPk(enrollment.id, {
+      include: [
+        {
+          model: Student,
+          as: 'student',
+          attributes: ['name', 'email'],
+        },
+        {
+          model: Plan,
+          as: 'plan',
+          attributes: ['title', 'monthly_price'],
+        },
+      ],
+    });
+
+    await Queue.add(WelcomeMail.key, {
+      FindEnrollment,
     });
     return res.json(enrollment);
   }
